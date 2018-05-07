@@ -1,6 +1,7 @@
 #include <Common/getNumberOfPhysicalCPUCores.h>
 #include <thread>
 #include <fstream>
+#include <math.h>
 
 #if defined(__x86_64__)
 
@@ -19,16 +20,17 @@ unsigned getNumberOfPhysicalCPUCores()
     std::ifstream cgroup_read_in("/sys/fs/cgroup/cpu/cpu.cfs_quota_us");
     if (cgroup_read_in.is_open())
     {
-      std::string allocated_cpus_str{ std::istreambuf_iterator<char>(cgroup_read_in), std::istreambuf_iterator<char>() };
-      int allocated_cpus_int = std::stoi(allocated_cpus_str);
+        std::string allocated_cpus_share_str{ std::istreambuf_iterator<char>(cgroup_read_in), std::istreambuf_iterator<char>() };
+        int allocated_cpus_share_int = std::stoi(allocated_cpus_share_str);
 
-      cgroup_read_in.close();
+        cgroup_read_in.close();
 
-      // If a valid value is present
-      if(allocated_cpus_int > -1)
-      {
-	return (unsigned) allocated_cpus_int;
-      }
+        // If a valid value is present
+        if(allocated_cpus_share_int > -1)
+        {
+	    unsigned int allocated_cpus = round(allocated_cpus_share_int / 1000);
+            return allocated_cpus;
+        }
     }
 
     cpu_raw_data_t raw_data;
